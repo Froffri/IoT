@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = temperature
+CONTIKI_PROJECT = temp_cpower
 all: $(CONTIKI_PROJECT)
 
 CONTIKI = /home/user/contiki-ng
