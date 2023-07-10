@@ -9,6 +9,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.google.gson.Gson;
 
+import unipi.iot.sensors.ConsPowerManager;
 import unipi.iot.sensors.TempManager;
 import unipi.iot.skeleton.SensManager;
 
@@ -27,7 +28,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
     private TempManager tManager = null;
 
-    // TODO private ConsPowerManager cpManager = null;
+    private ConsPowerManager cpManager = null;
 
     private class TempMessage {
         int subzone;
@@ -74,7 +75,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
                                 "->Consumed Power: " + msg.consumed_power / 1000 + "kW"
                                 );
 
-            // TODO cpManager.handle(msg.subzone, msg.consumed_power, mqttClient);
+            cpManager.handle(msg.subzone, msg.consumed_power, mqttClient);
         } else {
             return;
         }
@@ -85,7 +86,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
         tManager = new TempManager(nSubzones);
 
-        // TODO cpManager = new ConsPowerManager(nSubzones);
+        cpManager = new ConsPowerManager(nSubzones);
 
         do {
             try {
@@ -112,9 +113,29 @@ public class Coordinator extends CoapServer implements MqttCallback {
     public SensManager getSensorManager(String topic) {
         if(topic.equals(topics[0]))// Temperature
             return tManager;
-        //TODO if(topic.equals(topics[1])) // Consumed Power
-        //  return cpManager;
+        if(topic.equals(topics[1])) // Consumed Power
+            return cpManager;
         return null;
+    }
+
+    public void overview(){
+        
+        System.out.println("+---------------+-----------------------+-----------------------+");
+        System.out.println("|Subzone\t|Temperature\t\t|Consumed Power\t\t|");
+        System.out.println("+---------------+-----------------------+-----------------------+");
+        
+        for (int i = 1; i <= nSubzones; i++) {
+            
+            System.out.println("|" + i + "\t\t|" + seeTemp(tManager.lastValues.get(i).temperature) + "\t\t|"+ cpManager.lastValues.get(i).consumed_power / 1000 +"kW\t\t\t|");
+            System.out.println("|\t\t| [" + seeTemp(tManager.boundsList.get(i).lowBound) + "] [" + seeTemp(tManager.boundsList.get(i).highBound) + "]\t| [" + cpManager.boundsList.get(i).lowBound / 1000 + "kW] [" + cpManager.boundsList.get(i).highBound / 1000 + "kW]\t|");
+            System.out.println("+---------------+-----------------------+-----------------------+");
+        }
+    }
+
+    public String seeTemp(int temp){
+        String stemp = Integer.toString(temp);
+        // System.out.print(stemp.substring(0, (int)stemp.length()/2+1) + "." + stemp.substring((int)stemp.length()/2+1) + "°C");
+        return stemp.substring(0, (int)stemp.length()/2) + "." + stemp.substring((int)stemp.length()/2) + "°C";
     }
 }
 

@@ -21,14 +21,18 @@ public class ConsPowerManager implements SensManager {
             consumed_power = cd;
             timestamp = System.currentTimeMillis();
         }
+        public CPowerData(){
+            consumed_power = 10000;
+            timestamp = 0;
+        }
     }
 
-    HashMap<Integer, CPowerData> lastValues = new HashMap<>();
+    public HashMap<Integer, CPowerData> lastValues = new HashMap<>();
 
     // Class that holds the bounds in which the consumed current should stay
     public static class Bounds{
-        int lowBound;
-        int highBound;
+        public int lowBound;
+        public int highBound;
         public Bounds(){
             lowBound = 40000;
             highBound = 100000;
@@ -38,12 +42,13 @@ public class ConsPowerManager implements SensManager {
             highBound = high;
         }
     }
-    HashMap<Integer, Bounds> boundsList = new HashMap<>();
+    public HashMap<Integer, Bounds> boundsList = new HashMap<>();
 
     public ConsPowerManager(int nSubzones){
         //I initialize the tables containing the bounds
-        for (int i = 0; i < nSubzones; i++) {
+        for (int i = 1; i <= nSubzones; i++) {
             boundsList.put(i, new Bounds());
+            lastValues.put(i, new CPowerData());
         }
 
         coapManager = new PowerModule(nSubzones);
@@ -52,13 +57,15 @@ public class ConsPowerManager implements SensManager {
     @Override
     public void get(int[] subzones) {
         if(subzones == null){
-            System.out.println("No subzone selected!");
+            lastValues.forEach((key, value) -> {
+                System.out.println("Area:" + key + "-> Consumed Power: " + value.consumed_power / 1000 + "kW");
+            });
             return;
         }
             
         for (int i : subzones) {
             // Area 1 -> Consumed Power: 49.365kW
-            System.out.println("Area:" +  i + "-> Consumed Power: " + lastValues.get(i).consumed_power / 1000 + "kW");
+            System.out.println("Area:" + i + "-> Consumed Power: " + lastValues.get(i).consumed_power / 1000 + "kW");
         }
     }
 

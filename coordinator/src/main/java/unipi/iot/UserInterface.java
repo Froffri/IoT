@@ -9,22 +9,25 @@ import java.net.UnknownHostException;
 import org.eclipse.californium.core.network.CoapEndpoint;
 
 import unipi.iot.sensors.TempManager;
+import unipi.iot.sensors.ConsPowerManager;
 
 public class UserInterface 
 {
+    private static final int nSubzones = 1;
+
     static Coordinator coordinator;
     static TempManager tManager;
-    // static TempManager cpManager;
+    static ConsPowerManager cpManager;
 
     private static void printCommands() {
         System.out.println(
-            "help <command> --> Shows the usage of a specified command. If empty shows all the commands.\n" +
-            "get_temp [subzone_list] --> Shows the temperature of all the listed subzones. Every subzone should be separated by a comma. `-a` or an empty set shows all subzones.\n" +
-            "set_temp [lower_bound] [upper_bound] [subzone_list] --> Changes the bounds in which the temperature will stay. Default: [18.00°C] [26.00°C]\n" +
-            "get_pow [subzone_list] --> Shows the power consumed by all the listed subzones. Every subzone should be separated by a comma. `-a` or an empty set shows all subzones.\n" +
-            "set_pow_bounds [lower_bound] [upper_bound] [subzone_list] --> Changes the bounds of `Underuse` and `Overload`. Default: [40kW] [100kW]\n" +
-            "overview --> Shows a list that displays the general informations of the datacenter.\n" +
-            "quit --> Exits from the application."
+            "help <command> --> Shows the usage of a specified command. If empty shows all the commands.\n\n" +
+            "get_temp [subzone_list] --> Shows the temperature of all the listed subzones. Every subzone should be separated by a comma. `-a` or an empty set shows all subzones.\n\n" +
+            "set_temp [lower_bound] [upper_bound] [subzone_list] --> Changes the bounds in which the temperature will stay. Default: [18.00°C] [26.00°C]\n\n" +
+            "get_pow [subzone_list] --> Shows the power consumed by all the listed subzones. Every subzone should be separated by a comma. `-a` or an empty set shows all subzones.\n\n" +
+            "set_pow_bounds [lower_bound] [upper_bound] [subzone_list] --> Changes the bounds of `Underuse` and `Overload`. Default: [40kW] [100kW]\n\n" +
+            "overview --> Shows a list that displays the general informations of the datacenter.\n\n" +
+            "quit --> Exits from the application.\n"
             );
     }
 
@@ -110,6 +113,10 @@ public class UserInterface
                 try {
                     for (int i = 0; i < subzones.length; i++) {
                         i_subzones[i] = Integer.parseInt(subzones[i]);
+                        if(i_subzones[i] > nSubzones){
+                            System.out.println("Some subzones are nonexistent! Max number: " + nSubzones);
+                            return;
+                        }
                     }
                 } catch (NumberFormatException e) {
                     System.out.println("Incorrect subzone format!");
@@ -149,6 +156,10 @@ public class UserInterface
                 
                     for (int i = 0; i < subzones.length; i++) {
                         i_subzones[i] = Integer.parseInt(subzones[i]);
+                        if(i_subzones[i] > nSubzones){
+                            System.out.println("Some subzones are nonexistent! Max number: " + nSubzones);
+                            return;
+                        }
                     }
 
                     // CHANGE TEMP OF SUBZONES FROM THE LIST [i_subzones]
@@ -164,6 +175,7 @@ public class UserInterface
             case "get_pow": {
                 if(parts.length == 1 || parts[1].equals("-a")){ // If there's no argument or the argument is "-a" print all
                     // PRINT ALL SUBZONE CONSUMED POWER
+                    cpManager.get(null);
                     break;
                 }
                 String subzones[] = parts[1].split(",");
@@ -172,13 +184,17 @@ public class UserInterface
                 try {
                     for (int i = 0; i < subzones.length; i++) {
                         i_subzones[i] = Integer.parseInt(subzones[i]);
+                        if(i_subzones[i] > nSubzones){
+                            System.out.println("Some subzones are nonexistent! Max number: " + nSubzones);
+                            return;
+                        }
                     }
                 } catch (NumberFormatException e) {
                     System.out.println("Incorrect subzone format!");
                     break;
                 }
                 // PRINT CONSUMED POWER OF SUBZONE FROM THE LIST [i_subzones]
-                
+                cpManager.get(i_subzones);
                 break;
             }
             case "set_pow_bounds": {
@@ -199,8 +215,8 @@ public class UserInterface
                     }
 
                     if(parts[3].equals("-a")){
-
                         //CHANGE ALL SUBZONE POWER BOUNDS
+                        cpManager.set(null, lowPow, upPow);
                         break;
                     }
 
@@ -209,22 +225,26 @@ public class UserInterface
                 
                     for (int i = 0; i < subzones.length; i++) {
                         i_subzones[i] = Integer.parseInt(subzones[i]);
+                        if(i_subzones[i] > nSubzones){
+                            System.out.println("Some subzones are nonexistent! Max number: " + nSubzones);
+                            return;
+                        }
                     }
 
+                    // CHANGE TEMP OF SUBZONES FROM THE LIST [i_subzones]
+                    cpManager.set(i_subzones, lowPow, upPow);
+                    
+                    break;
                 } catch (NumberFormatException e) {
                     System.out.println("Incorrect format! Try again.");
                     break;
                 }
 
-                // CHANGE TEMP OF SUBZONES FROM THE LIST [i_subzones]
-
-                
-                break;
             }
             case "overview": {
                 
                 // PRINT A TABLE CONTAINING THE OVERVIEW OF THE DATACENTER
-
+                coordinator.overview();
                 break;
             }
             case "quit": {
@@ -255,11 +275,11 @@ public class UserInterface
         coordinator.start();
 
         tManager = (TempManager) coordinator.getSensorManager("temperature");
-        // cpManager = (ConsPowerManager) coordinator.getSensorManager("consumed_power");
+        cpManager = (ConsPowerManager) coordinator.getSensorManager("consumed_power");
 
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
-        System.out.println("*********************************SMART DATACENTER*********************************\n");
+        System.out.println("**********************************************SMART DATACENTER**********************************************\n");
         printCommands();
         while(true) {
             System.out.print("-> ");

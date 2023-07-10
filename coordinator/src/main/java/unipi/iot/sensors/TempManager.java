@@ -18,17 +18,21 @@ public class TempManager implements SensManager {
         public int temperature; 
         public long timestamp;
         public TempData(int temp){
-            temperature = temp;
-            timestamp = System.currentTimeMillis();
+            this.temperature = temp;
+            this.timestamp = System.currentTimeMillis();
+        }
+        public TempData(){
+            this.temperature = 1000;
+            this.timestamp = 0;
         }
     }
 
-    HashMap<Integer, TempData> lastValues = new HashMap<>();
+    public HashMap<Integer, TempData> lastValues = new HashMap<>();
 
     // Class that holds the bounds in which the temperature should stay
     public static class Bounds{
-        int lowBound;
-        int highBound;
+        public int lowBound;
+        public int highBound;
         public Bounds(){
             lowBound = 1800;
             highBound = 2600;
@@ -38,12 +42,13 @@ public class TempManager implements SensManager {
             highBound = high;
         }
     }
-    HashMap<Integer, Bounds> boundsList = new HashMap<>();
+    public HashMap<Integer, Bounds> boundsList = new HashMap<>();
 
     public TempManager(int nSubzones){
         //I initialize the tables containing the bounds
-        for (int i = 0; i < nSubzones; i++) {
+        for (int i = 1; i <= nSubzones; i++) {
             boundsList.put(i, new Bounds());
+            lastValues.put(i, new TempData());
         }
 
         coapManager = new Watercooling(nSubzones);
@@ -52,7 +57,12 @@ public class TempManager implements SensManager {
     @Override
     public void get(int[] subzones) {
         if(subzones == null){
-            System.out.println("No subzone selected!");
+            
+            lastValues.forEach((key, value) -> {
+                String temperature = Integer.toString(value.temperature);
+                System.out.println("Area:" +  key + "-> Temperature: " + temperature.substring(0, (int)temperature.length()/2) + "." + temperature.substring((int)temperature.length()/2) + "°C");
+            });
+
             return;
         }
             
