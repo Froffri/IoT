@@ -18,7 +18,8 @@ public class PowerModule implements ActuatorManager{
             coapClient = new CoapClient("coap://[" + ip + "]/power_module");
         }
         public Actuator(){
-            this.ip = "fd00::1";
+            this.ip = "fd00::204:4:4:4";
+            // this.ip = "fd00::1";
             coapClient = new CoapClient("coap://[" + ip + "]/power_module");
         }
     }
@@ -26,7 +27,7 @@ public class PowerModule implements ActuatorManager{
     private final HashMap<Integer, Actuator> powerMap = new HashMap<>();
 
     public PowerModule(int nSubzones) {
-        for (int i = 0; i < nSubzones; i++) {
+        for (int i = 1; i <= nSubzones; i++) {
             powerMap.put(i, new Actuator());
         }
     }

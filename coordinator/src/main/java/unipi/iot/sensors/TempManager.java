@@ -2,17 +2,14 @@ package unipi.iot.sensors;
 
 import java.util.HashMap;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
+import unipi.iot.DBManager;
 
 import unipi.iot.actuators.Watercooling;
 import unipi.iot.skeleton.SensManager;
 
 public class TempManager implements SensManager {
 
-    Watercooling coapManager;
+    public Watercooling coapManager;
 
     public static class TempData {
         public int temperature; 
@@ -59,23 +56,28 @@ public class TempManager implements SensManager {
         if(subzones == null){
             
             lastValues.forEach((key, value) -> {
-                String temperature = Integer.toString(value.temperature);
-                System.out.println("Area:" +  key + "-> Temperature: " + temperature.substring(0, (int)temperature.length()/2) + "." + temperature.substring((int)temperature.length()/2) + "°C");
+
+                // Area 1 -> Temperature: 18.00°C
+                System.out.println("Area: " + key + "-> Temperature: " + seeTemp(value.temperature) + " | Bounds: [" + seeTemp(boundsList.get(key).lowBound) + "] [" + seeTemp(boundsList.get(key).highBound) + "]");
             });
 
             return;
         }
             
         for (int i : subzones) {
-            String temperature = Integer.toString(lastValues.get(i).temperature);
 
             // Area 1 -> Temperature: 18.00°C
-            System.out.println("Area:" +  i + "-> Temperature: " + temperature.substring(0, (int)temperature.length()/2) + "." + temperature.substring((int)temperature.length()/2) + "°C");
+            System.out.println("Area: " +  i + "-> Temperature: " + seeTemp(lastValues.get(i).temperature) + " | Bounds: [" + seeTemp(boundsList.get(i).lowBound) + "] [" + seeTemp(boundsList.get(i).highBound) + "]");
         }
     }
 
     @Override
     public void set(int[] subzones, int down, int up) {
+
+        if(down >= up * 0.75){
+            System.out.println("The lower bound must be inferior to the 3/4 of the upper bound!");
+            return;
+        }
 
         // If the subzone list is null I have to change every value
         if(subzones == null){
@@ -83,6 +85,7 @@ public class TempManager implements SensManager {
                 value.lowBound = down;
                 value.highBound = up;
             });
+            return;
         }
         
         for (int i : subzones) {
@@ -104,31 +107,23 @@ public class TempManager implements SensManager {
         return null;
     }
 
-    public void handle(int subzone, int temp, MqttClient mqttClient){
-        // TODO Create a function that handles the temperature data (db insert and sensor message shit)
+    public String handle(int subzone, int temp){
         
         // Override the value of the temperature
         lastValues.put(subzone, new TempData(temp));
 
+        DBManager.getInstance().insertTempSample(subzone, temp);
+
         String mes = check(subzone, temp);
 
-        if(mes != null) {
-            try {
-                mqttClient.publish("SEN" + subzone, new MqttMessage(mes.getBytes()));
-            } catch (MqttPersistenceException e) {
-                System.out.println("Could not publish on area " + subzone + "!");
-                e.printStackTrace();
-            } catch (MqttException e) {
-                System.out.println("Could not publish on area " + subzone + "!");
-                e.printStackTrace();
-            }
+        return mes;
 
-            coapManager.sendMessage(subzone, mes);
-        }
-            
+    }
 
-
-        // TODO insert in the database
+    public String seeTemp(int temp){
+        String stemp = Integer.toString(temp);
+        // System.out.print(stemp.substring(0, (int)stemp.length()/2+1) + "." + stemp.substring((int)stemp.length()/2+1) + "°C");
+        return stemp.substring(0, (int)stemp.length()/2) + "." + stemp.substring((int)stemp.length()/2) + "°C";
     }
     
 }

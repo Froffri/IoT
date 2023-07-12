@@ -54,4 +54,6 @@ dkms.conf
 # Cooja builds
 CoAP/build/
 MQTT/build/
-rpl-border-router/build/
+rpl-border-router/
+Californium.properties
+run/

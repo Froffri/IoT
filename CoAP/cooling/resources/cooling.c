@@ -15,7 +15,6 @@
 #define LOG_LEVEL LOG_LEVEL_DBG
 #endif
 
-
 static void cooling_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 
 RESOURCE(res_cooling_module,
@@ -26,14 +25,24 @@ RESOURCE(res_cooling_module,
          NULL);
 
 bool water_on = false;
+bool power_off = false;
+
+static struct ctimer off_timer;
+
+static void pow_on(void *ptr){
+	leds_set(LEDS_RED);
+	power_off = false;
+}
 
 static void cooling_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) {
 	size_t len = 0;
 	const char *text = NULL;
+
+	if(power_off)
+		return;
 		
-	//len = coap_get_post_variable(request, "motor", &text);
 	len = coap_get_payload(request, (const uint8_t**)&text);
-	if(len <= 0 || len >= 4)
+	if(len <= 0)
 		goto error;
 	
 	if(strncmp(text, "WON", len) == 0) {
@@ -44,6 +53,11 @@ static void cooling_put_handler(coap_message_t *request, coap_message_t *respons
 		water_on = false;
 		leds_set(LEDS_RED);
 		LOG_INFO("WATER OFF\n");
+	} else if(strncmp(text, "POFF", len) == 0) {
+		water_on = false;
+		power_off = true;
+		LOG_INFO("POWER OFF\n");
+		ctimer_set(&off_timer, CLOCK_SECOND * 20, pow_on, NULL);
 	}
 	else
 		goto error;

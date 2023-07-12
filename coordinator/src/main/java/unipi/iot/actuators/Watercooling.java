@@ -15,18 +15,19 @@ public class Watercooling implements ActuatorManager{
 
         public Actuator(String ip){
             this.ip = ip;
-            coapClient = new CoapClient("coap://[" + ip + "]/watercooling");
+            this.coapClient = new CoapClient("coap://[" + ip + "]/watercooling");
         }
         public Actuator(){
-            this.ip = "fd00::1";
-            coapClient = new CoapClient("coap://[" + ip + "]/watercooling");
+            this.ip = "fd00::203:3:3:3";
+            // this.ip = "fd00::1";
+            this.coapClient = new CoapClient("coap://[" + ip + "]/watercooling");
         }
     }
 
     private final HashMap<Integer, Actuator> waterMap = new HashMap<>();
 
     public Watercooling(int nSubzones) {
-        for (int i = 0; i < nSubzones; i++) {
+        for (int i = 1; i <= nSubzones; i++) {
             waterMap.put(i, new Actuator());
         }
     }

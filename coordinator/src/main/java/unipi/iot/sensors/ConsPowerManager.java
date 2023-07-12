@@ -2,17 +2,14 @@ package unipi.iot.sensors;
 
 import java.util.HashMap;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
-
+import unipi.iot.DBManager;
 import unipi.iot.actuators.PowerModule;
 import unipi.iot.skeleton.SensManager;
 
 public class ConsPowerManager implements SensManager {
 
-    PowerModule coapManager;
+    public PowerModule coapManager;
+    static Boolean overload = false;
 
     public static class CPowerData {
         public int consumed_power; 
@@ -58,19 +55,24 @@ public class ConsPowerManager implements SensManager {
     public void get(int[] subzones) {
         if(subzones == null){
             lastValues.forEach((key, value) -> {
-                System.out.println("Area:" + key + "-> Consumed Power: " + value.consumed_power / 1000 + "kW");
+                System.out.println("Area: " + key + "-> Consumed Power: " + value.consumed_power / 1000 + "kW | Bounds: [" + boundsList.get(key).lowBound / 1000 + "kW] [" + boundsList.get(key).highBound / 1000 + "kW]");
             });
             return;
         }
             
         for (int i : subzones) {
             // Area 1 -> Consumed Power: 49.365kW
-            System.out.println("Area:" + i + "-> Consumed Power: " + lastValues.get(i).consumed_power / 1000 + "kW");
+            System.out.println("Area: " + i + "-> Consumed Power: " + lastValues.get(i).consumed_power / 1000 + "kW");
         }
     }
 
     @Override
     public void set(int[] subzones, int down, int up) {
+
+        if(down >= up * 0.75){
+            System.out.println("The lower bound must be inferior to the 3/4 of the upper bound!");
+            return;
+        }
 
         // If the subzone list is null I have to change every value
         if(subzones == null){
@@ -78,6 +80,7 @@ public class ConsPowerManager implements SensManager {
                 value.lowBound = down;
                 value.highBound = up;
             });
+            return;
         }
         
         for (int i : subzones) {
@@ -90,40 +93,36 @@ public class ConsPowerManager implements SensManager {
     public String check(int subzone, int cp) { 
         Bounds borders = boundsList.get(subzone);
 
-        if(cp <= borders.lowBound)
-            return "POFF";
-        else if(cp >= borders.highBound)
-            return "OL";
-        else if(lastValues.get(subzone).consumed_power >= borders.highBound)
+        // If i'm in overload and the consumed power is still greater than the 3/4 than the high bound then i'm still in overload
+        if(overload && cp >= borders.highBound * 0.75) 
+            return null;
+        // If i'm in overload and the consumed power is still greater than the 3/4 than the high bound then i'm not in overload anymore
+        else if(overload){
+            overload = false;
             return "PON";
+        }
+        // If the power is less than the lower bound then i'm in underuse phase
+        else if(cp <= borders.lowBound)
+            return "POFF";
+        // If the power is more than the upper bound then i'm in overload phase
+        else if(cp >= borders.highBound){
+            overload = true;
+            return "OL";
+        }
         return null;
     }
 
-    public void handle(int subzone, int cp, MqttClient mqttClient){
-        // TODO Create a function that handles the consumed power data (db insert and sensor message shit)
+    public String handle(int subzone, int cp){
         
         // Override the value of the cperature
         lastValues.put(subzone, new CPowerData(cp));
 
+        DBManager.getInstance().insertCPSample(subzone, cp);
+        
         String mes = check(subzone, cp);
 
-        if(mes != null) {
-            try {
-                mqttClient.publish("SEN" + subzone, new MqttMessage(mes.getBytes()));
-            } catch (MqttPersistenceException e) {
-                System.out.println("Could not publish on area " + subzone + "!");
-                e.printStackTrace();
-            } catch (MqttException e) {
-                System.out.println("Could not publish on area " + subzone + "!");
-                e.printStackTrace();
-            }
+        return mes;
 
-            coapManager.sendMessage(subzone, mes);
-        }
-            
-
-
-        // TODO insert in the database
     }
 
 }

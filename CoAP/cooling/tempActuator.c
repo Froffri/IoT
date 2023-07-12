@@ -53,7 +53,6 @@ static bool is_connected() {
 		return true;
   	}
 
-	LOG_INFO("Waiting for connection with the Border Router...\n");
 	return false;
 }
 
@@ -65,27 +64,23 @@ PROCESS_THREAD(cooling, ev, data){
     PROCESS_BEGIN();
     leds_off(LEDS_ALL);
 
-    while(1){
-        PROCESS_YIELD();
-        if(ev == button_hal_press_event){
 
-            PROCESS_PAUSE();
+    leds_set(LEDS_RED);
 
-            leds_set(LEDS_RED);
+    LOG_INFO("Inizialization cooling module...\n");
+    coap_activate_resource(&res_cooling_module, "watercooling"); 
 
-            LOG_INFO("Inizialization cooling module...\n");
-            coap_activate_resource(&res_cooling_module, "cooling"); 
-
-            // Trying to connect to the border router
-            etimer_set(&connectivity_timer, CLOCK_SECOND * INTERVAL_BETWEEN_CONNECTION_TESTS);
-            PROCESS_WAIT_UNTIL(etimer_expired(&connectivity_timer));
-            while(!is_connected()) {
-                etimer_reset(&connectivity_timer);
-                PROCESS_WAIT_UNTIL(etimer_expired(&connectivity_timer));
-            }
-
-        }
+    // Trying to connect to the border router
+    etimer_set(&connectivity_timer, CLOCK_SECOND * INTERVAL_BETWEEN_CONNECTION_TESTS);
+    PROCESS_WAIT_UNTIL(etimer_expired(&connectivity_timer));
+	LOG_INFO("Waiting for connection with the Border Router...\n");
+    
+    while(!is_connected()) {
+        etimer_reset(&connectivity_timer);
+        PROCESS_WAIT_UNTIL(etimer_expired(&connectivity_timer));
     }
+
+
 
     PROCESS_END();
 }

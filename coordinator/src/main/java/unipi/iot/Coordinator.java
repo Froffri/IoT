@@ -30,11 +30,11 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
     private ConsPowerManager cpManager = null;
 
-    private class TempMessage {
+    public class TempMessage {
         int subzone;
         int temperature;
     }
-    private class CpMessage {
+    public class CpMessage {
         int subzone;
         int consumed_power;
     }
@@ -57,25 +57,60 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
         if(topic.equals("temperature")){
 
-            TempMessage msg = parser.fromJson(new String(message.getPayload()), TempMessage.class);
-    
-            String temp = Integer.toString(msg.temperature);
-            
-            System.out.println("Received message from area " + msg.subzone + 
-                                "-> Temperature: " + temp.substring(0, (int)temp.length()/2) + "." + temp.substring((int)temp.length()/2) + "°C"
-                                );
+            try {
+                TempMessage msg = parser.fromJson(new String(message.getPayload()), TempMessage.class);
+                
+                // System.out.print("Received message from area " + msg.subzone + 
+                //                     "-> Temperature: " + seeTemp(msg.temperature) +
+                //                     "\n-> "
+                //                     );
+                
+                String mes = tManager.handle(msg.subzone, msg.temperature);
 
-            tManager.handle(msg.subzone, msg.temperature, mqttClient);
+                if(mes != null) {
+                    try {
+                        mqttClient.publish("SEN" + msg.subzone, new MqttMessage(mes.getBytes()));
+                        tManager.coapManager.sendMessage(msg.subzone, mes);
+                    } catch (MqttException e) {
+                        System.out.println("Could not publish on area " + msg.subzone + "!");
+                        e.printStackTrace();
+                    }
+                }
+            } catch (com.google.gson.JsonSyntaxException e) {
+                System.out.println("Error parsing JSON: " + new String(message.getPayload()));
+                e.printStackTrace();
+            }
 
         } else if(topic.equals("consumed_power")) {
 
-            CpMessage msg = parser.fromJson(new String(message.getPayload()), CpMessage.class);
+            try {
+                CpMessage msg = parser.fromJson(new String(message.getPayload()), CpMessage.class);
+                // System.out.print("Received message from area " + msg.subzone + 
+                //                     "->Consumed Power: " + msg.consumed_power / 1000 + "kW" +
+                //                     "\n-> "
+                //                     );
 
-            System.out.println("Received message from area " + msg.subzone + 
-                                "->Consumed Power: " + msg.consumed_power / 1000 + "kW"
-                                );
+                String mes = cpManager.handle(msg.subzone, msg.consumed_power);
 
-            cpManager.handle(msg.subzone, msg.consumed_power, mqttClient);
+                if(mes != null) {
+                    try {
+                        mqttClient.publish("SEN" + msg.subzone, new MqttMessage(mes.getBytes()));
+                    } catch (MqttException e) {
+                        System.out.println("Could not publish on area " + msg.subzone + "!");
+                        e.printStackTrace();
+                    }
+
+                    cpManager.coapManager.sendMessage(msg.subzone, mes);
+
+                    if(mes.equals("POFF"))
+                        tManager.coapManager.sendMessage(msg.subzone, mes);
+
+                }
+            } catch (com.google.gson.JsonSyntaxException e) {
+                System.out.println("Error parsing JSON: " + new String(message.getPayload()));
+                e.printStackTrace();
+            }
+
         } else {
             return;
         }
@@ -127,7 +162,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
         for (int i = 1; i <= nSubzones; i++) {
             
             System.out.println("|" + i + "\t\t|" + seeTemp(tManager.lastValues.get(i).temperature) + "\t\t|"+ cpManager.lastValues.get(i).consumed_power / 1000 +"kW\t\t\t|");
-            System.out.println("|\t\t| [" + seeTemp(tManager.boundsList.get(i).lowBound) + "] [" + seeTemp(tManager.boundsList.get(i).highBound) + "]\t| [" + cpManager.boundsList.get(i).lowBound / 1000 + "kW] [" + cpManager.boundsList.get(i).highBound / 1000 + "kW]\t|");
+            System.out.println("|\t\t| [" + seeTemp(tManager.boundsList.get(i).lowBound) + "] [" + seeTemp(tManager.boundsList.get(i).highBound) + "]\t| [" + cpManager.boundsList.get(i).lowBound / 1000 + "kW] [" + cpManager.boundsList.get(i).highBound / 1000 + "kW]  \t|");
             System.out.println("+---------------+-----------------------+-----------------------+");
         }
     }

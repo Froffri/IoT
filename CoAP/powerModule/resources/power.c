@@ -31,7 +31,7 @@ bool power_off = false;
 bool start = false;
 
 static struct ctimer blink_timer;
-
+static struct ctimer off_timer;
 
 static void blink(void *ptr) {
 	if(!start)
@@ -42,25 +42,36 @@ static void blink(void *ptr) {
 	leds_toggle(LEDS_GREEN);
 }
 
+static void pow_on(void *ptr) {
+	power_off = false;
+}
+
 static void power_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) {
 	size_t len = 0;
 	const char *text = NULL;
 		
-	//len = coap_get_post_variable(request, "motor", &text);
+	if(power_off)
+		return;
+
 	len = coap_get_payload(request, (const uint8_t**)&text);
-	if(len <= 0 || len >= 4)
+	if(len <= 0)
 		goto error;
 	
-	if(strncmp(text, "UU", len) == 0) {
+	leds_off(LEDS_RED);
+
+	if(strncmp(text, "POFF", len) == 0) {
 		power_off = true;
+		start = false;
 		leds_set(LEDS_RED);
 		LOG_INFO("POWER OFF\n");
+		ctimer_set(&off_timer, CLOCK_SECOND * 20, pow_on, NULL);
 	} else if(strncmp(text, "PON", len) == 0) {
 		power_off = false;
 		start = false;
 		leds_set(LEDS_GREEN);
 		LOG_INFO("POWER ON\n");
 	} else if(strncmp(text, "OL", len) == 0) {
+		power_off = false;
 		start = true;
 		ctimer_set(&blink_timer, CLOCK_SECOND * 0.5, blink, NULL);
 		LOG_WARN("OVERLOAD\n");

@@ -2,17 +2,12 @@ package unipi.iot;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-
-import org.eclipse.californium.core.network.CoapEndpoint;
+import java.util.logging.*;
 
 import unipi.iot.sensors.TempManager;
 import unipi.iot.sensors.ConsPowerManager;
 
-public class UserInterface 
-{
+public class UserInterface {
     private static final int nSubzones = 1;
 
     static Coordinator coordinator;
@@ -134,8 +129,8 @@ public class UserInterface
                 }
 
                 try {
-                    int lowTemp = Integer.parseInt(parts[1].replace(".", ""));
-                    int upTemp = Integer.parseInt(parts[2].replace(".", ""));
+                    int lowTemp = Integer.parseInt(parts[1].replace(".", "").replace(",", ""));
+                    int upTemp = Integer.parseInt(parts[2].replace(".", "").replace(",", ""));
                 
                     // If the down temperature is higher than the up temperature i swap them
                     if(lowTemp > upTemp) {
@@ -263,15 +258,11 @@ public class UserInterface
 
     public static void main( String[] args ) {
 
+        // I deactivate the Californium logging
+        Logger californiumLogger = Logger.getLogger("org.eclipse.californium");
+        californiumLogger.setLevel(Level.OFF);
+
         coordinator = new Coordinator();
-        InetAddress addr;
-        try {
-            addr = InetAddress.getByName("0.0.0.0");
-            InetSocketAddress bindToAddress = new InetSocketAddress(addr, 5683);
-            coordinator.addEndpoint(new CoapEndpoint(bindToAddress));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
         coordinator.start();
 
         tManager = (TempManager) coordinator.getSensorManager("temperature");
