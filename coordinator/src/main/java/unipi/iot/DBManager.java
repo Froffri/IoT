@@ -22,8 +22,8 @@ public class DBManager {
     static {
         databaseIp = "127.0.0.1";
         databaseUsername = "root";
-        databasePassword = "root";
-        databaseName = "SmartDatacenter";
+        databasePassword = "rootroot";
+        databaseName = "ioT_Project";
     }
 
     private Connection getConnection() throws SQLException {
