@@ -20,9 +20,9 @@ public class DBManager {
     }
 
     static {
-        databaseIp = "127.0.0.1";
-        databaseUsername = "root";
-        databasePassword = "rootroot";
+        databaseIp = "localhost";
+        databaseUsername = "ops";
+        databasePassword = "opsops";
         databaseName = "ioT_Project";
     }
 
@@ -38,7 +38,7 @@ public class DBManager {
                 PreparedStatement statement = connection.prepareStatement("INSERT INTO temperature(subzone, value) VALUES (?, ?)")
         ) {
             statement.setInt(1, subzone);
-            statement.setFloat(2, temperature / 100);
+            statement.setDouble(2, temperature / 100.0);
             statement.executeUpdate();
         }
         catch (final SQLException e) {
@@ -61,4 +61,23 @@ public class DBManager {
             System.err.println("Error in the SQL insert!");
         }
     }
+
+    // public void updateBounds(int subzone,int t_low, int t_high, int p_low, int p_high) {
+    //     try (
+    //             Connection connection = getConnection();
+    //             PreparedStatement statement = connection.prepareStatement("UPDATE bounds SET t_low = ?, t_high = ?, p_low = ?, p_high = ? WHERE subzone = ?")
+    //     ) {
+    //         statement.setFloat(1, t_low / 100);
+    //         statement.setFloat(2, t_high / 100);
+    //         statement.setInt(3, p_low);
+    //         statement.setInt(4, p_high);
+    //         statement.setInt(5, subzone);
+    //         statement.executeUpdate();
+    //     }
+    //     catch (final SQLException e) {
+    //         e.printStackTrace();
+    //         System.err.println("Error in the SQL insert!");
+    //     }
+    // }
+
 }

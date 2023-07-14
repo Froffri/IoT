@@ -17,7 +17,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
     private static final int nSubzones = 1;
 
-    private static final String BROKER = "tcp://[::1]:1883";
+    private static final String BROKER = "tcp://[::1]:2023";
     private static final String CLIENT_ID = "SmartDatacenter";
 
     String[] topics = {"temperature", "consumed_power"};
@@ -122,6 +122,10 @@ public class Coordinator extends CoapServer implements MqttCallback {
         tManager = new TempManager(nSubzones);
 
         cpManager = new ConsPowerManager(nSubzones);
+
+        // for (int i = 1; i <= nSubzones; i++) {
+        //     DBManager.getInstance().updateBounds(i, i, i, i, i); // Shoud insert
+        // }
 
         do {
             try {

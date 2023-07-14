@@ -57,4 +57,6 @@ MQTT/build/
 rpl-border-router/
 Californium.properties
 run/
-SmartDatacenter-tcp11883/
+SmartDatacenter-tcp*/
+*/build/
+*/*/build/
