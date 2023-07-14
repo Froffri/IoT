@@ -39,12 +39,13 @@ static void blink(void *ptr) {
 	
 	ctimer_reset(&blink_timer);
 
-	leds_toggle(LEDS_GREEN);
+	leds_toggle(LEDS_BLUE);
 	leds_toggle(LEDS_RED);
 }
 
 static void pow_on(void *ptr) {
 	power_off = false;
+	leds_set(LEDS_BLUE);
 }
 
 static void power_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) {
@@ -63,18 +64,18 @@ static void power_put_handler(coap_message_t *request, coap_message_t *response,
 	if(strncmp(text, "POFF", len) == 0) {
 		power_off = true;
 		start = false;
-		leds_set(LEDS_RED);
+		leds_off(LEDS_ALL);
 		LOG_INFO("POWER OFF\n");
 		ctimer_set(&off_timer, CLOCK_SECOND * 20, pow_on, NULL);
 	} else if(strncmp(text, "PON", len) == 0) {
 		power_off = false;
 		start = false;
-		leds_set(LEDS_GREEN);
+		leds_set(LEDS_BLUE);
 		LOG_INFO("POWER ON\n");
 	} else if(strncmp(text, "OL", len) == 0) {
 		power_off = false;
 		start = true;
-		leds_set(LEDS_GREEN);
+		leds_set(LEDS_BLUE);
 		ctimer_set(&blink_timer, CLOCK_SECOND * 0.5, blink, NULL);
 		LOG_WARN("OVERLOAD\n");
 	}

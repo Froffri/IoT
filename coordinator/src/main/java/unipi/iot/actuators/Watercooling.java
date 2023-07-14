@@ -18,7 +18,7 @@ public class Watercooling implements ActuatorManager{
             this.coapClient = new CoapClient("coap://[" + ip + "]/watercooling");
         }
         public Actuator(){
-            this.ip = "fd00::203:3:3:3";
+            this.ip = "fd00::f6ce:36a5:8106:327d";
             // this.ip = "fd00::1";
             this.coapClient = new CoapClient("coap://[" + ip + "]/watercooling");
         }

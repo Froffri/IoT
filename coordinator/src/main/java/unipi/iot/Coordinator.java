@@ -67,6 +67,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
                 
                 String mes = tManager.handle(msg.subzone, msg.temperature);
 
+                // System.out.println(mes);
                 if(mes != null) {
                     try {
                         mqttClient.publish("SEN" + msg.subzone, new MqttMessage(mes.getBytes()));
@@ -86,24 +87,26 @@ public class Coordinator extends CoapServer implements MqttCallback {
             try {
                 CpMessage msg = parser.fromJson(new String(message.getPayload()), CpMessage.class);
                 // System.out.print("Received message from area " + msg.subzone + 
-                //                     "->Consumed Power: " + msg.consumed_power / 1000 + "kW" +
+                //                     "-> Consumed Power: " + msg.consumed_power / 1000 + "kW" +
                 //                     "\n-> "
                 //                     );
 
                 String mes = cpManager.handle(msg.subzone, msg.consumed_power);
 
+                // System.out.println(mes);
+
                 if(mes != null) {
                     try {
                         mqttClient.publish("SEN" + msg.subzone, new MqttMessage(mes.getBytes()));
+    
+                        cpManager.coapManager.sendMessage(msg.subzone, mes);
+                        if(mes.equals("POFF"))
+                            tManager.coapManager.sendMessage(msg.subzone, mes);
+                        
                     } catch (MqttException e) {
                         System.out.println("Could not publish on area " + msg.subzone + "!");
                         e.printStackTrace();
                     }
-
-                    cpManager.coapManager.sendMessage(msg.subzone, mes);
-
-                    if(mes.equals("POFF"))
-                        tManager.coapManager.sendMessage(msg.subzone, mes);
 
                 }
             } catch (com.google.gson.JsonSyntaxException e) {

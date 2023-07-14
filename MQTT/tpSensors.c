@@ -366,6 +366,9 @@ PROCESS_THREAD(sensRead, ev, data) {
       state=STATE_INIT;
 
       etimer_set(&periodic_timer, PUBLISH_INTERVAL);
+      
+      start = true;
+      ctimer_set(&blink_timer, CLOCK_SECOND * 0.5, blink, NULL);
 
       power_off = false;
     }

@@ -18,8 +18,8 @@ public class PowerModule implements ActuatorManager{
             coapClient = new CoapClient("coap://[" + ip + "]/power_module");
         }
         public Actuator(){
-            this.ip = "fd00::204:4:4:4";
-            // this.ip = "fd00::1";
+            this.ip = "fd00::f6ce:3654:b8b3:cdf8";
+            // this.ip = "fd00::204:4:4:4";
             coapClient = new CoapClient("coap://[" + ip + "]/power_module");
         }
     }

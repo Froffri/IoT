@@ -87,7 +87,7 @@ PROCESS_THREAD(powerModule, ev, data){
         etimer_reset(&connectivity_timer);
         PROCESS_WAIT_UNTIL(etimer_expired(&connectivity_timer));
     }
-    leds_set(LEDS_GREEN);
+    leds_set(LEDS_BLUE);
 
     PROCESS_END();
 }

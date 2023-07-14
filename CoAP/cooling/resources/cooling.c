@@ -30,7 +30,7 @@ static bool power_off = false;
 static struct ctimer off_timer;
 
 static void pow_on(void *ptr){
-	leds_set(LEDS_RED);
+	leds_set(LEDS_BLUE);
 	power_off = false;
 }
 
@@ -51,11 +51,12 @@ static void cooling_put_handler(coap_message_t *request, coap_message_t *respons
 		LOG_INFO("WATER ON\n");
 	} else if(strncmp(text, "WOFF", len) == 0) {
 		water_on = false;
-		leds_set(LEDS_RED);
+		leds_set(LEDS_BLUE);
 		LOG_INFO("WATER OFF\n");
 	} else if(strncmp(text, "POFF", len) == 0) {
 		water_on = false;
 		power_off = true;
+		leds_off(LEDS_ALL);
 		LOG_INFO("POWER OFF\n");
 		ctimer_set(&off_timer, CLOCK_SECOND * 20, pow_on, NULL);
 	}
