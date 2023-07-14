@@ -1,7 +1,7 @@
 CONTIKI_PROJECT = temp_cpower
 all: $(CONTIKI_PROJECT)
 
-CONTIKI = /home/user/contiki-ng
+CONTIKI = /home/froffri/IoT/contiki-ng
 
 include $(CONTIKI)/Makefile.dir-variables
 MODULES += $(CONTIKI_NG_APP_LAYER_DIR)/mqtt

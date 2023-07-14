@@ -24,8 +24,8 @@ RESOURCE(res_cooling_module,
          cooling_put_handler,
          NULL);
 
-bool water_on = false;
-bool power_off = false;
+static bool water_on = false;
+static bool power_off = false;
 
 static struct ctimer off_timer;
 

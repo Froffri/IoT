@@ -62,8 +62,16 @@ static bool is_connected() {
 PROCESS_THREAD(cooling, ev, data){
 
     PROCESS_BEGIN();
-    leds_off(LEDS_ALL);
 
+    static button_hal_button_t *btn;
+
+    btn = button_hal_get_by_index(0);
+	if(btn == NULL) {
+		LOG_ERR("Unable to find the default button... exit\n");
+        exit(1);
+	}
+
+    PROCESS_WAIT_EVENT_UNTIL(ev == button_hal_press_event);
 
     leds_set(LEDS_RED);
 
@@ -79,8 +87,6 @@ PROCESS_THREAD(cooling, ev, data){
         etimer_reset(&connectivity_timer);
         PROCESS_WAIT_UNTIL(etimer_expired(&connectivity_timer));
     }
-
-
 
     PROCESS_END();
 }

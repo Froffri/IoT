@@ -9,6 +9,7 @@
 #include "net/ipv6/uip-ds6-nbr.h" 
 #include "net/ipv6/simple-udp.h" 
 #include "button-hal.h" 
+#include "dev/leds.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include "mqtt.h"
@@ -26,6 +27,8 @@
 
 #define NTOPICS 2
 
+// Global variable to start and stop the blinking
+static bool start = false;
 /*---------------------------------------------------------------------------*/
 
 // TEMPERATURE CONSIGLIATE PER LA FUNZIONE CORRETTA DI UN DATACENTER [18.00, 27.00]
@@ -93,6 +96,7 @@ static char app_buffer[2][APP_BUFFER_SIZE] = {0};
 // Periodic timer to check the state of the MQTT client
 #define STATE_MACHINE_PERIODIC     (CLOCK_SECOND >> 1)
 static struct etimer periodic_timer;
+static struct ctimer blink_timer;
 
 // Various states
 static uint8_t state;
@@ -292,6 +296,16 @@ static void readnSend(){
 }
 /*---------------------------------------------------------------------------*/
 
+static void blink(void *ptr) {
+	if(!start)
+		return;
+	
+	ctimer_reset(&blink_timer);
+
+	leds_toggle(LEDS_GREEN);
+}
+/*---------------------------------------------------------------------------*/
+
 PROCESS_THREAD(sensRead, ev, data) {
 
   PROCESS_BEGIN();
@@ -308,6 +322,10 @@ PROCESS_THREAD(sensRead, ev, data) {
 		// goto exit;
     exit(1);
 	}
+
+  PROCESS_WAIT_EVENT_UNTIL(ev == button_hal_press_event);
+  start = true;
+  ctimer_set(&blink_timer, CLOCK_SECOND * 0.5, blink, NULL);
 
 	LOG_INFO("Starting...\n");
 	
@@ -332,6 +350,9 @@ PROCESS_THREAD(sensRead, ev, data) {
       etimer_stop(&periodic_timer);
       etimer_set(&periodic_timer, CLOCK_SECOND * 20);
       ctimer_stop(&send_after_5);
+      leds_off(LEDS_GREEN);
+      start = false;
+      ctimer_stop(&blink_timer);
 
       mqtt_disconnect(&conn);
 

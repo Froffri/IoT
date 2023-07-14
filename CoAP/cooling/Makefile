@@ -8,7 +8,7 @@ PLATFORMS_EXCLUDE = sky z1
 # Include CoAP resources
 MODULES_REL += ./resources
 
-CONTIKI=/home/user/contiki-ng
+CONTIKI=/home/froffri/IoT/contiki-ng
 
 # Include the CoAP implementation
 include $(CONTIKI)/Makefile.dir-variables

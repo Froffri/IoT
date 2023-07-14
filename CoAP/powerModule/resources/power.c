@@ -25,10 +25,10 @@ RESOURCE(res_power_module,
          power_put_handler,
          NULL);
 
-bool power_off = false;
+static bool power_off = false;
 
 // Global variable to start and stop the blinking
-bool start = false;
+static bool start = false;
 
 static struct ctimer blink_timer;
 static struct ctimer off_timer;
@@ -40,6 +40,7 @@ static void blink(void *ptr) {
 	ctimer_reset(&blink_timer);
 
 	leds_toggle(LEDS_GREEN);
+	leds_toggle(LEDS_RED);
 }
 
 static void pow_on(void *ptr) {
@@ -73,6 +74,7 @@ static void power_put_handler(coap_message_t *request, coap_message_t *response,
 	} else if(strncmp(text, "OL", len) == 0) {
 		power_off = false;
 		start = true;
+		leds_set(LEDS_GREEN);
 		ctimer_set(&blink_timer, CLOCK_SECOND * 0.5, blink, NULL);
 		LOG_WARN("OVERLOAD\n");
 	}
