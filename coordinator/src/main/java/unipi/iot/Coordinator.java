@@ -17,7 +17,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
     private static final int nSubzones = 1;
 
-    private static final String BROKER = "tcp://[::1]:2023";
+    private static final String BROKER = "tcp://[::1]:1883";
     private static final String CLIENT_ID = "SmartDatacenter";
 
     String[] topics = {"temperature", "consumed_power"};
